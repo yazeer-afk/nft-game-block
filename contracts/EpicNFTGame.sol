@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import 'hardhat/console.sol';
 
+import {Base64} from "base64-sol/base64.sol";
+
 contract EpicNFTGame is ERC721 {
 
     struct CharacterAttribute{
@@ -45,7 +47,7 @@ contract EpicNFTGame is ERC721 {
 
             defaultCharacters.push(attributes);
 
-            console.log("Done initializing %s w/ HP %s, img %s", attributes.name, attributes.hp, attributes.imageUri);
+            // console.log("Done initializing %s w/ HP %s, img %s", attributes.name, attributes.hp, attributes.imageUri);
         }
         _tokenIds.increment();
     }
@@ -65,5 +67,32 @@ contract EpicNFTGame is ERC721 {
 
         nftOwners[msg.sender] = newItemId;
         _tokenIds.increment();
+    }
+
+    function tokenURI(uint256 _tokenId) public view override returns(string memory){
+        CharacterAttribute memory attribute = nftAttributeHolder[_tokenId];
+
+        string memory strHp = Strings.toString(attribute.hp);
+        string memory strMaxHp = Strings.toString(attribute.maxHp);
+        string memory strAttackDamage = Strings.toString(attribute.attackDamage);
+
+        string memory json = Base64.encode(
+            abi.encodePacked(
+                '{"name": "',
+                attribute.name,
+                ' -- NFT #: ',
+                Strings.toString(_tokenId),
+                '", "description": "This is an NFT that lets people play in the game Metaverse Slayer!", "image": "',
+                attribute.imageUri,
+                '", "attributes": [ { "trait_type": "Health Points", "value": ',strHp,', "max_value":',strMaxHp,'}, { "trait_type": "Attack Damage", "value": ',
+                strAttackDamage,'} ]}'
+            )
+        );
+
+        string memory output = string(
+          abi.encodePacked("data:application/json;base64,", json)
+        );
+
+        return output;
     }
 }
